@@ -25,8 +25,36 @@ def get_listings_from_search_results(html_file):
         ('Loft in Mission District', 210, '1944564'),  # example
     ]
     """
-    pass
-
+    f = open(html_file)
+    soup = BeautifulSoup(f, 'html.parser')
+    f.close()
+    result = []
+    titles = soup.find_all('div', class_="t1jojoys dir dir-ltr")
+    title_list = []
+    for title in titles:
+        title_list.append(title.text)
+    # print(title_list)
+    cost_list = []
+    costs = soup.find_all('div', class_="phbjkf1 dir dir-ltr")
+    for cost in costs:
+        price = cost.find_all('span', class_="a8jt5op dir dir-ltr")
+        for item in price:
+            price_text = item.text
+            # print(price_text)
+            cost_list.append(re.findall("^\$(\d+)", price_text)[0])
+    # print(cost_list)
+    id_list = []
+    ids = soup.find_all('a', class_="ln2bl2p dir dir-ltr")
+    for id in ids:
+        id_link = id.get("href", None)
+        id_link = id_link.split("?")[0]
+        id_num = id_link.split("/")[-1]
+        id_list.append(id_num)
+    # print(id_list)
+    for i in range(0, len(title_list)-1):
+        result.append((title_list[i],cost_list[i],id_list[i]))
+    # print(result)
+    return result
 
 def get_listing_information(listing_id):
     """
@@ -52,8 +80,31 @@ def get_listing_information(listing_id):
         number of bedrooms
     )
     """
-    pass
-
+    filename = "html_files/listing_" + listing_id + '.html'
+    f = open(filename)
+    soup = BeautifulSoup(f, 'html.parser')
+    f.close()
+    policy_info = soup.find_all('li', class_="f19phm7j dir dir-ltr")
+    policy = policy_info[0]
+    # print(policy)
+    policy_num = (policy.find_all('span', class_= "ll4r2nl dir dir-ltr"))[0].text
+    # print(policy_num)
+    type_info = soup.find_all('div', class_= "_cv5qq4")[0]
+    # print(type_info)
+    type = (type_info.find_all('h2', class_="_14i3z6h"))[0].text
+    type = type.lower()
+    # print(type)
+    if "private" in type:
+        house_type = "Private Room"
+    elif "shared" in type:
+        house_type = "Shared Room"
+    else:
+        house_type = "Entire Room"
+    print(house_type)
+    bedroom_info = soup.find_all("ol", class_="lgx66tx dir dir-ltr")
+    bedroom_list = (bedroom_info.find_all("li", class_="l7n4lsf dir dir-ltr"))[1]
+    bedroom_num = (bedroom_list.find_all("span", class_="pen26si dir dir-ltr"))
+    print(bedroom_num)
 
 def get_detailed_listing_database(html_file):
     """
@@ -239,7 +290,9 @@ class TestCases(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    get_listings_from_search_results("html_files/mission_district_search_results.html")
+    get_listing_information("1944564")
     database = get_detailed_listing_database("html_files/mission_district_search_results.html")
     write_csv(database, "airbnb_dataset.csv")
     check_policy_numbers(database)
-    unittest.main(verbosity=2)
+    # unittest.main(verbosity=2)
